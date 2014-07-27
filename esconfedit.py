@@ -214,10 +214,12 @@ class Systementry(object):
 def checkArguments(args):
     result = True
     if args.mode == "set":
-        if args.fullname == None or args.name == None or args.directory == None or args.extension == None or args.command == None or args.platform == None or args.theme == None:
+        if args.fullname is None or args.name is None or \
+            args.directory is None or args.extension is None or \
+            args.command is None or args.platform is None or args.theme is None:
             result = False
     elif args.mode == "remove":
-        if args.name == None:
+        if args.name is None:
             result = False
     return result
 
@@ -227,7 +229,9 @@ class Toolparser(object):
     def __init__(self):
         super(Toolparser, self).__init__()
         self.__parser = argparse.ArgumentParser(
-            description='Sets or removes system information from system configuration files of EmulationStation (see emulationstation.org).')
+            description='Sets or removes system information from system \
+                         configuration files of EmulationStation (see \
+                         emulationstation.org).')
         self.__parser.add_argument("mode", help="Sets the mode",
                                    choices=["set", "remove"])
         self.__parser.add_argument(
