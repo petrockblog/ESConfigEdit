@@ -11,7 +11,7 @@ __version__ = "1.0.0"
 __maintainer__ = "Florian Mueller"
 __email__ = "contact@petrockblock.com"
 
-import xml.etree.ElementTree as ET
+from lxml import etree
 from xml.dom import minidom
 import argparse
 import os.path
@@ -48,10 +48,10 @@ class Systemlist(object):
             print "Cannot find input file", sourcefile
             sys.exit(1)
 
-        self.__transformEntities(sourcefile, Systemlist.REPLENT_TOXML)
-        self.__tree = ET.parse(self.__sourcefile)
-        self.__transformEntities(sourcefile, Systemlist.REPLENT_FROMXML)
-        self.__root = self.__tree.getroot()
+        xmlstring = self.__transformEntities(
+            self.__sourcefile, Systemlist.REPLENT_TOXML)
+        xmlparser = etree.XMLParser(encoding='utf-8', recover=True)
+        self.__root = etree.XML(xmlstring, parser=xmlparser)
         for system in self.__root.findall('system'):
             self.__systemlist.append(Systementry(system.find('fullname').text,
                                                  system.find('name').text,
@@ -62,14 +62,18 @@ class Systemlist(object):
                                                  system.find('theme').text))
 
     def saveSystems(self, targetfile):
-        newroot = ET.Element("systemList")
+        newroot = etree.Element("systemList")
         for system in self.__systemlist:
             system.addToTree(newroot)
 
         outputfile = open(targetfile, 'w')
         outputfile.write(self.__prettify(newroot))
         outputfile.close()
-        self.__transformEntities(targetfile, Systemlist.REPLENT_FROMXML)
+        prettyxml = self.__transformEntities(
+            targetfile, Systemlist.REPLENT_FROMXML)
+        outputfile = open(targetfile, 'w')
+        outputfile.write(prettyxml)
+        outputfile.close()
 
     def existsSystem(self, searchname):
         entry = self.__findSystem(searchname)
@@ -100,24 +104,23 @@ class Systemlist(object):
     def __prettify(self, elem):
         """Return a pretty-printed XML string for the Element.
         """
-        rough_string = ET.tostring(elem, 'utf-8')
+        rough_string = etree.tostring(elem)
         reparsed = minidom.parseString(rough_string)
         return reparsed.toprettyxml(indent="  ")
 
     def __transformEntities(self, sourcefile, direction):
         if direction == Systemlist.REPLENT_TOXML:
-            replacements = {'&&': '&amp;&amp;'}
+            replacements = {'&&': '&#038;&#038;'}
         elif direction == Systemlist.REPLENT_FROMXML:
-            replacements = {'&amp;&amp;': '&&', '&quot;': '"'}
+            replacements = {
+                '&amp;&amp;': '&&', '&#038;&#038;': '&&', '&quot;': '"'}
 
         with open(sourcefile, "r") as workfile:
             data = workfile.read()
             workfile.close()
         for src, target in replacements.iteritems():
             data = data.replace(src, target)
-        outfile = open(sourcefile, 'w')
-        outfile.write(data)
-        outfile.close()
+        return data
 
 
 class Systementry(object):
@@ -145,20 +148,20 @@ class Systementry(object):
         return self.__name == other.getName()
 
     def addToTree(self, root):
-        newnode = ET.SubElement(root, 'system')
-        newsubnode = ET.SubElement(newnode, "fullname")
+        newnode = etree.SubElement(root, 'system')
+        newsubnode = etree.SubElement(newnode, "fullname")
         newsubnode.text = self.__fullname
-        newsubnode = ET.SubElement(newnode, "name")
+        newsubnode = etree.SubElement(newnode, "name")
         newsubnode.text = self.__name
-        newsubnode = ET.SubElement(newnode, "path")
+        newsubnode = etree.SubElement(newnode, "path")
         newsubnode.text = self.__path
-        newsubnode = ET.SubElement(newnode, "extension")
+        newsubnode = etree.SubElement(newnode, "extension")
         newsubnode.text = self.__extension
-        newsubnode = ET.SubElement(newnode, "command")
+        newsubnode = etree.SubElement(newnode, "command")
         newsubnode.text = self.__command
-        newsubnode = ET.SubElement(newnode, "platform")
+        newsubnode = etree.SubElement(newnode, "platform")
         newsubnode.text = self.__platform
-        newsubnode = ET.SubElement(newnode, "theme")
+        newsubnode = etree.SubElement(newnode, "theme")
         newsubnode.text = self.__theme
 
     def getFullname(self):
@@ -214,9 +217,7 @@ class Systementry(object):
 def checkArguments(args):
     result = True
     if args.mode == "set":
-        if args.fullname is None or args.name is None or \
-            args.directory is None or args.extension is None or \
-            args.command is None or args.platform is None or args.theme is None:
+        if args.fullname is None or args.name is None or args.directory is None or args.extension is None or args.command is None or args.platform is None or args.theme is None:
             result = False
     elif args.mode == "remove":
         if args.name is None:
@@ -230,8 +231,8 @@ class Toolparser(object):
         super(Toolparser, self).__init__()
         self.__parser = argparse.ArgumentParser(
             description='Sets or removes system information from system \
-                         configuration files of EmulationStation (see \
-                         emulationstation.org).')
+            configuration files of EmulationStation \
+            (see emulationstation.org).')
         self.__parser.add_argument("mode", help="Sets the mode",
                                    choices=["set", "remove"])
         self.__parser.add_argument(
