@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+
+"""esconfig.py: Sets or removes system information from system configuration \
+files of EmulationStation. """
+
+__author__ = "Florian Mueller"
+__copyright__ = "Copyright 2014, Florian Mueller"
+__credits__ = ["Florian Mueller"]
+__license__ = "GPL"
+__version__ = "1.0.0"
+__maintainer__ = "Florian Mueller"
+__email__ = "contact@petrockblock.com"
+
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import argparse
