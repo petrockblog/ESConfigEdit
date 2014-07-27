@@ -9,7 +9,7 @@ To install this tool, you can download the current release directly from the rep
 ```bash
 git clone https://github.com/petrockblog/ESConfigEdit.git
 ```
-This downloads the current repository into the folder `ESConfigEdit`.
+This downloads the current repository into the folder `ESConfigEdit`. You can make the program executable with the command `chmod +x esconfig.edit.py`.
 
 
 ## Usage
