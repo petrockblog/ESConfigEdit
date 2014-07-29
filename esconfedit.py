@@ -42,14 +42,23 @@ class Systemlist(object):
         else:
             raise StopIteration
 
-    def loadSystems(self, sourcefile):
+    def loadSystems(self, sourcefile, dontstop):
         self.__sourcefile = sourcefile
         if not os.path.isfile(sourcefile):
-            print "Cannot find input file", sourcefile
-            sys.exit(1)
+            if not dontstop:
+                print "Cannot find input file", sourcefile
+                sys.exit(1)
+            else:
+                emptyfile = open(sourcefile, "w")
+                emptyfile.writelines(["<?xml version=\"1.0\" ?>\n",
+                                      "<systemList>\n", "</systemList>"])
+                emptyfile.close()
 
+        inputfile = open(sourcefile, 'r')
+        xmlstring = inputfile.read()
+        inputfile.close()
         xmlstring = self.__transformEntities(
-            self.__sourcefile, Systemlist.REPLENT_TOXML)
+            xmlstring, Systemlist.REPLENT_TOXML)
         xmlparser = etree.XMLParser(encoding='utf-8', recover=True)
         self.__root = etree.XML(xmlstring, parser=xmlparser)
         for system in self.__root.findall('system'):
@@ -62,15 +71,18 @@ class Systemlist(object):
                                                  system.find('theme').text))
 
     def saveSystems(self, targetfile):
+        if os.path.isfile(targetfile):
+            fileName, fileExtension = os.path.splitext(targetfile)
+            os.renames(targetfile, str(fileName) + "BAK" +
+                       fileExtension)
+
         newroot = etree.Element("systemList")
         for system in self.__systemlist:
             system.addToTree(newroot)
 
-        outputfile = open(targetfile, 'w')
-        outputfile.write(self.__prettify(newroot))
-        outputfile.close()
+        prettyxml = self.__prettify(newroot)
         prettyxml = self.__transformEntities(
-            targetfile, Systemlist.REPLENT_FROMXML)
+            prettyxml, Systemlist.REPLENT_FROMXML)
         outputfile = open(targetfile, 'w')
         outputfile.write(prettyxml)
         outputfile.close()
@@ -108,27 +120,25 @@ class Systemlist(object):
         reparsed = minidom.parseString(rough_string)
         return reparsed.toprettyxml(indent="  ")
 
-    def __transformEntities(self, sourcefile, direction):
+    def __transformEntities(self, inputstring, direction):
         if direction == Systemlist.REPLENT_TOXML:
             replacements = {'&&': '&#038;&#038;'}
         elif direction == Systemlist.REPLENT_FROMXML:
             replacements = {
                 '&amp;&amp;': '&&', '&#038;&#038;': '&&', '&quot;': '"'}
 
-        with open(sourcefile, "r") as workfile:
-            data = workfile.read()
-            workfile.close()
         for src, target in replacements.iteritems():
-            data = data.replace(src, target)
-        return data
+            inputstring = inputstring.replace(src, target)
+        return inputstring
 
 
 class Systementry(object):
 
+    """Systementry represents a single entry in the EmulationStation file for \
+    the system configurations."""
+
     ENABLEDTRUE = "True"
     ENABLEDFALSE = "False"
-
-    """docstring for Systementry"""
 
     def __init__(self, fullname, name, path, extension, command, platform,
                  theme):
@@ -239,8 +249,11 @@ class Toolparser(object):
             "inputfile", help="path and name of input XML file")
         self.__parser.add_argument(
             "outputfile", help="path and name of output XML file")
+        self.__parser.add_argument(
+            "--dontstop", help="Do not stop, if inputfile does not exist.\
+             Continue with empty systems list then.", action='store_true')
         group = self.__parser.add_argument_group(
-            'optional arguments, system-specific:')
+            'optional arguments, system-specific')
         group.add_argument("-f", "--fullname", help="full name of the system")
         group.add_argument("-n", "--name", help="name of the system")
         group.add_argument(
@@ -259,13 +272,14 @@ class Toolparser(object):
 
 if __name__ == "__main__":
 
+    returnvalue = 0
     parser = Toolparser()
     args = parser.parse_args()
 
     if args.mode == "set":
         if checkArguments(args):
             systemlist = Systemlist()
-            systemlist.loadSystems(args.inputfile)
+            systemlist.loadSystems(args.inputfile, args.dontstop)
             entry = Systementry(args.fullname,
                                 args.name,
                                 args.directory,
@@ -276,8 +290,10 @@ if __name__ == "__main__":
             systemlist.setSystem(entry)
             systemlist.saveSystems(args.outputfile)
             print "Successfully saved to file", args.outputfile
+            returnvalue = 0
         else:
             print "System arguments are incomplete."
+            returnvalue = 1
 
     elif args.mode == "remove":
         if checkArguments(args):
@@ -289,5 +305,6 @@ if __name__ == "__main__":
                 str(args.inputfile)
         else:
             print "System name is missing as argument."
+            returnvalue = 1
 
-    sys.exit(0)
+    sys.exit(returnvalue)
