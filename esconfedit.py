@@ -240,11 +240,11 @@ class Toolparser(object):
     def __init__(self):
         super(Toolparser, self).__init__()
         self.__parser = argparse.ArgumentParser(
-            description='Sets or removes system information from system \
+            description='Adds/sets or removes system information from system \
             configuration files of EmulationStation \
             (see emulationstation.org).')
         self.__parser.add_argument("mode", help="Sets the mode",
-                                   choices=["set", "remove"])
+                                   choices=["add", "remove"])
         self.__parser.add_argument(
             "inputfile", help="path and name of input XML file")
         self.__parser.add_argument(
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     parser = Toolparser()
     args = parser.parse_args()
 
-    if args.mode == "set":
+    if args.mode == "add":
         if checkArguments(args):
             systemlist = Systemlist()
             systemlist.loadSystems(args.inputfile, args.dontstop)
