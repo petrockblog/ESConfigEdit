@@ -46,7 +46,8 @@ class Systemlist(object):
         self.__sourcefile = sourcefile
         if not os.path.isfile(sourcefile):
             if not dontstop:
-                print "Cannot find input file", sourcefile
+                print "[" + str(os.path.basename(__file__)) + \
+                    "] Cannot find input file", sourcefile
                 sys.exit(1)
             else:
                 emptyfile = open(sourcefile, "w")
@@ -289,10 +290,12 @@ if __name__ == "__main__":
                                 args.theme)
             systemlist.setSystem(entry)
             systemlist.saveSystems(args.outputfile)
-            print "Successfully saved to file", args.outputfile
+            print "[" + str(os.path.basename(__file__)) + \
+                "] Successfully saved to file " + str(args.outputfile)
             returnvalue = 0
         else:
-            print "System arguments are incomplete."
+            print "[" + str(os.path.basename(__file__)) + \
+                "] System arguments are incomplete."
             returnvalue = 1
 
     elif args.mode == "remove":
@@ -301,10 +304,12 @@ if __name__ == "__main__":
             systemlist.loadSystems(args.inputfile)
             systemlist.removeSystem(args.name)
             systemlist.saveSystems(args.outputfile)
-            print "Removed system " + str(args.name) + " from " +\
+            print "[" + str(os.path.basename(__file__)) + \
+                "] Removed system " + str(args.name) + " from " +\
                 str(args.inputfile)
         else:
-            print "System name is missing as argument."
+            print "[" + str(os.path.basename(__file__)) + \
+                "] System name is missing as argument."
             returnvalue = 1
 
     sys.exit(returnvalue)
