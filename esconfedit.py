@@ -44,6 +44,8 @@ class Systemlist(object):
 
     def loadSystems(self, sourcefile, dontstop):
         self.__sourcefile = sourcefile
+
+        self.__assure_path_exists(os.path.dirname(sourcefile))
         if not os.path.isfile(sourcefile):
             if not dontstop:
                 print "[" + str(os.path.basename(__file__)) + \
@@ -72,6 +74,7 @@ class Systemlist(object):
                                                  system.find('theme').text))
 
     def saveSystems(self, targetfile):
+        self.__assure_path_exists(os.path.dirname(targetfile))
         if os.path.isfile(targetfile):
             fileName, fileExtension = os.path.splitext(targetfile)
             os.renames(targetfile, str(fileName) + "BAK" +
@@ -131,6 +134,11 @@ class Systemlist(object):
         for src, target in replacements.iteritems():
             inputstring = inputstring.replace(src, target)
         return inputstring
+
+    def __assure_path_exists(self, path):
+        dir = os.path.dirname(path)
+        if not os.path.exists(dir):
+                os.makedirs(dir)
 
 
 class Systementry(object):
