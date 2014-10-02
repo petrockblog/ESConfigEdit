@@ -42,6 +42,12 @@ class Systemlist(object):
         else:
             raise StopIteration
 
+    def __elementText(self, system, tag):
+        temptext = system.findtext(tag)
+        if temptext is None:
+            temptext = ""
+        return temptext
+
     def loadSystems(self, sourcefile, dontstop):
         self.__sourcefile = sourcefile
 
@@ -65,13 +71,13 @@ class Systemlist(object):
         xmlparser = etree.XMLParser(encoding='utf-8', recover=True)
         self.__root = etree.XML(xmlstring, parser=xmlparser)
         for system in self.__root.findall('system'):
-            self.__systemlist.append(Systementry(system.find('fullname').text,
-                                                 system.find('name').text,
-                                                 system.find('path').text,
-                                                 system.find('extension').text,
-                                                 system.find('command').text,
-                                                 system.find('platform').text,
-                                                 system.find('theme').text))
+            self.__systemlist.append(Systementry(self.__elementText(system,'fullname'),
+                                                 self.__elementText(system,'name'),
+                                                 self.__elementText(system,'path'),
+                                                 self.__elementText(system,'extension'),
+                                                 self.__elementText(system,'command'),
+                                                 self.__elementText(system,'platform'),
+                                                 self.__elementText(system,'theme')))
 
     def saveSystems(self, targetfile):
         self.__assure_path_exists(os.path.dirname(targetfile))
