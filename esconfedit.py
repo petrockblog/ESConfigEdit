@@ -315,7 +315,7 @@ if __name__ == "__main__":
     elif args.mode == "remove":
         if checkArguments(args):
             systemlist = Systemlist()
-            systemlist.loadSystems(args.inputfile)
+            systemlist.loadSystems(args.inputfile, args.dontstop)
             systemlist.removeSystem(args.name)
             systemlist.saveSystems(args.outputfile)
             print "[" + str(os.path.basename(__file__)) + \
